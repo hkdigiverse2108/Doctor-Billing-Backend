@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { config } from "../../../config";
 import { ensureIndexes } from "../initIndexes";
-
+import dns from "dns";
+dns.setServers(["1.1.1.1", "8.8.8.8"])
 mongoose.set("strictQuery", false);
 
 const dbUrl = config.MONGODB_URL

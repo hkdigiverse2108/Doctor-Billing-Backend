@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 import { responseMessage, ROLES, status_code } from "../../common";
 import { financialModel, userModel } from "../../database";
 import { applyMedicalStoreScope, countData, createData, endOfDay, findOneAndPopulate, getData, getFirstMatch, reqInfo, resolveUserMedicalStoreId, sendError, sendSuccess, startOfDay, titleCase, updateData } from "../../helper";
-import { financialDataValidation, financialUpdateDataValidation, joiValidationOptions, toggleFinancialStatusValidation } from "../../validation";
+import { commonValidation, financialValidation } from "../../validation";
 
 // ================= Add New fiadd_financial =================
 export const add_financial = async (req, res) => {
     reqInfo(req)
     try {
-        const { error, value } = financialDataValidation.validate(req.body, joiValidationOptions)
+        const { error, value } = financialValidation.financialDataValidation.validate(req.body, commonValidation.joiValidationOptions)
         if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
         value.name = titleCase(String(value.name || "").trim())
@@ -47,7 +47,7 @@ export const update_financial_by_id = async (req, res) => {
     reqInfo(req)
     try {
         const { id } = req.params
-        const { error, value } = financialUpdateDataValidation.validate(req.body, joiValidationOptions)
+        const { error, value } = financialValidation.financialUpdateDataValidation.validate(req.body, commonValidation.joiValidationOptions)
         if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
         if (value.name) value.name = titleCase(String(value.name).trim())
@@ -215,7 +215,7 @@ export const toggle_financial_active_status = async (req, res) => {
     reqInfo(req)
     try {
         const { id } = req.params
-        const { error, value } = toggleFinancialStatusValidation.validate(req.body, joiValidationOptions)
+        const { error, value } = financialValidation.toggleFinancialStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
         if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
         if (!mongoose.Types.ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("financial id"))
 

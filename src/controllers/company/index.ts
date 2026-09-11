@@ -1,5 +1,5 @@
 import { userModel, companyModel } from "../../database";
-import { companyValidation, joiValidationOptions } from "../../validation";
+import { commonValidation, companyValidation } from "../../validation";
 import { responseMessage, ROLES, status_code } from "../../common";
 import { sendSuccess, sendError, deleteFileIfExists, resolveUserMedicalStoreId, applyMedicalStoreScope, reqInfo, titleCase } from "../../helper";
 import mongoose from "mongoose";
@@ -9,7 +9,7 @@ import { getData, getFirstMatch, countData, createData, updateData, findOneAndPo
 export const add_company = async (req, res) => {
   reqInfo(req);
   try {
-    const { error, value } = companyValidation.companyDataValidation.validate(req.body, joiValidationOptions);
+    const { error, value } = companyValidation.companyDataValidation.validate(req.body, commonValidation.joiValidationOptions);
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
 
     value.name = titleCase(String(value.name || "").trim());
@@ -70,7 +70,7 @@ export const update_company_by_id = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = companyValidation.companyUpdateDataValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = companyValidation.companyUpdateDataValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     if (value.name) value.name = titleCase(String(value.name).trim())
@@ -221,7 +221,7 @@ export const toggle_company_active_status = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = companyValidation.toggleCompanyStatusValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = companyValidation.toggleCompanyStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!mongoose.Types.ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("company id"))
 

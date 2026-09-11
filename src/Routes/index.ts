@@ -10,6 +10,7 @@ import { userRouter } from "./user";
 import { medicalStoreRouter } from "./medicalStore";
 import { dashboardRouter } from "./dashboard";
 import { financialRouter } from "./financial";
+import { patientRouter } from "./patient";
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.use("/category", CatergoryRouter);
 router.use("/medical-store", medicalStoreRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/financial", financialRouter);
+router.use("/patient", patientRouter);
 
 export { router };

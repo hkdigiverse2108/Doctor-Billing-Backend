@@ -1,15 +1,14 @@
 import { userModel, billModel, productModel, storeModel } from "../../database";
 import { responseMessage, ROLES, status_code, TAX_TYPE, BILL_STATUS, PAYMENT_METHOD } from "../../common";
 import mongoose from "mongoose";
-import { billValidation, joiValidationOptions } from "../../validation";
-import { reqInfo, sendSuccess, sendError, resolveQuickDateRange, startOfDay, endOfDay, buildBillPayload, canAccessMedicalStore, billQueryByRole } from "../../helper";
-import { getData, getFirstMatch, countData, updateData, findOneAndPopulate } from "../../helper/database_service";
+import { billValidation, commonValidation } from "../../validation";
+import { billQueryByRole, buildBillPayload, canAccessMedicalStore, countData, endOfDay, getData, getFirstMatch, reqInfo, resolveQuickDateRange, sendError, sendSuccess, startOfDay, updateData } from "../../helper";
 
 // ================== ADD BILL ==================
 export const add_bill = async (req, res) => {
   reqInfo(req)
   try {
-    const { error, value } = billValidation.addBillValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = billValidation.addBillValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     const { userId, items, discount = 0, billNumber } = value
@@ -147,7 +146,7 @@ export const update_bill_by_id = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = billValidation.updateBillValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = billValidation.updateBillValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!mongoose.Types.ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("bill id"))
 
@@ -358,8 +357,8 @@ export const get_all_bill = async (req, res) => {
     }
 
     const total = await countData(billModel, query)
-    const billsRaw: any = await getData( billModel, query,  {},  { sort: { purchaseDate: -1, createdAt: -1 }, skip: (pageNo - 1) * limitNo, limit: limitNo } )
-    
+    const billsRaw: any = await getData(billModel, query, {}, { sort: { purchaseDate: -1, createdAt: -1 }, skip: (pageNo - 1) * limitNo, limit: limitNo })
+
     const bills = await billModel.populate(billsRaw, [
       { path: "userId", select: "name medicalName email phone address city state pincode pan gstin signatureImg" },
       { path: "medicalStoreId", select: "name address pincode state panNumber gstNumber signatureImg" },
@@ -367,7 +366,8 @@ export const get_all_bill = async (req, res) => {
       { path: "items.company", select: "name gstNumber phone email address city state pincode logoImage" },
     ])
 
-    return sendSuccess(res, { bills,
+    return sendSuccess(res, {
+      bills,
       pagination: {
         page: pageNo,
         limit: limitNo,
@@ -406,7 +406,7 @@ export const toggle_bill_active_status = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = billValidation.toggleBillStatusValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = billValidation.toggleBillStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!mongoose.Types.ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("bill id"))
 

@@ -6,5 +6,6 @@ export const modelName = {
      categoryModelName: "category",
      billModelName : "bill",
      storeModelName : "medicalStore",
-     financialModelName : "financial"
+     financialModelName : "financial",
+     patientModelName : "patient"
 } as const

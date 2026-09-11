@@ -1,11 +1,10 @@
 import { userModel, otpModel } from "../../database";
 import bcrypt from "bcryptjs";
 import { responseMessage, status_code } from "../../common";
-import { authValidation, joiValidationOptions } from "../../validation";
-import {deleteFileIfExists,sendSuccess,sendError,} from "../../helper";
+import { authValidation, commonValidation } from "../../validation";
+import { deleteFileIfExists, sendSuccess, sendError, otpSender, buildOtpEmailTemplate, } from "../../helper";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import { buildOtpEmailTemplate, otpSender } from "../../helper";
 import { config } from "../../../config";
 
 const transporter = nodemailer.createTransport({
@@ -55,22 +54,22 @@ const emptySignaturePayload = () => ({
 export const signIn = async (req, res) => {
   const { error, value } = authValidation.signInValidation.validate(
     req.body,
-    joiValidationOptions
+    commonValidation.joiValidationOptions
   );
   if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
 
   try {
     const { email, password } = value;
-   
+
     const user = await userModel.findOne({ email, isDeleted: false });
     if (!user) return sendError(res, status_code.BAD_REQUEST, responseMessage.userNotFound);
-   
+
     if (user.isActive === false) return sendError(res, status_code.FORBIDDEN, deactivatedMsg);
     const match = bcrypt.compareSync(password, user.password);
     if (!match) return sendError(res, status_code.BAD_REQUEST, responseMessage.incorrectPassword);
 
     const isOtpSent = await otpSender(email);
-    
+
     return sendSuccess(res, { isOtpSent }, responseMessage.signIn_successful);
   } catch (err) {
     return sendError(res, status_code.INTERNAL_SERVER_ERROR, responseMessage.signIn_failed, err);
@@ -87,18 +86,18 @@ export const signout = async (req, res) => {
 export const verifyOTP = async (req, res) => {
   const { error, value } = authValidation.verifyOtpValidation.validate(
     req.body,
-    joiValidationOptions
+    commonValidation.joiValidationOptions
   );
-  
+
   if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
 
   try {
     const { email, otp, purpose = "signin" } = value;
-    
+
     const record = await otpModel.findOne({ email, purpose } as any).sort({ createdAt: -1 });
-    
-      if (!record) {
-      const msg = purpose === "reset"? responseMessage.forgotPassword_otp_invalid : "OTP is incorrect !";
+
+    if (!record) {
+      const msg = purpose === "reset" ? responseMessage.forgotPassword_otp_invalid : "OTP is incorrect !";
       return sendError(res, status_code.BAD_REQUEST, msg);
     }
 
@@ -108,10 +107,10 @@ export const verifyOTP = async (req, res) => {
       return sendError(res, status_code.BAD_REQUEST, msg);
     }
 
-    const isValid = purpose === "reset"? bcrypt.compareSync(otp, record.otp) : record.otp.toString() === otp.toString();
-    
+    const isValid = purpose === "reset" ? bcrypt.compareSync(otp, record.otp) : record.otp.toString() === otp.toString();
+
     if (!isValid) {
-      const msg = purpose === "reset" ? responseMessage.forgotPassword_otp_invalid  : "OTP is incorrect !";
+      const msg = purpose === "reset" ? responseMessage.forgotPassword_otp_invalid : "OTP is incorrect !";
       return sendError(res, status_code.BAD_REQUEST, msg);
     }
 
@@ -140,7 +139,7 @@ export const verifyOTP = async (req, res) => {
 export const updateProfile = async (req, res) => {
   const { error, value } = authValidation.updateProfileValidation.validate(
     req.body,
-    joiValidationOptions
+    commonValidation.joiValidationOptions
   );
   if (error) {
     return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
@@ -172,7 +171,8 @@ export const updateProfile = async (req, res) => {
     }
 
     if (value.email) {
-      const exists = await userModel.findOne({email: value.email,_id: { $ne: userId },
+      const exists = await userModel.findOne({
+        email: value.email, _id: { $ne: userId },
       });
       if (exists) {
         return sendError(res, status_code.BAD_REQUEST, "Email already in use by another account");
@@ -180,7 +180,7 @@ export const updateProfile = async (req, res) => {
     }
 
     const updated: any = await userModel.findByIdAndUpdate(userId, updateData, { new: true }).select("-password");
-   
+
     if (!updated) {
       return sendError(res, status_code.NOT_FOUND, "User not found");
     }
@@ -201,7 +201,7 @@ export const updateProfile = async (req, res) => {
 export const sendForgotPasswordOtp = async (req, res) => {
   const { error, value } = authValidation.forgotPasswordSendOtpValidation.validate(
     req.body,
-    joiValidationOptions
+    commonValidation.joiValidationOptions
   );
   if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
 
@@ -244,7 +244,7 @@ export const sendForgotPasswordOtp = async (req, res) => {
 export const resetForgotPassword = async (req, res) => {
   const { error, value } = authValidation.forgotPasswordResetValidation.validate(
     req.body,
-    joiValidationOptions
+    commonValidation.joiValidationOptions
   );
   if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
 
@@ -258,9 +258,9 @@ export const resetForgotPassword = async (req, res) => {
     if (!user) return sendError(res, status_code.NOT_FOUND, responseMessage.userNotFound);
 
     const record: any = await otpModel.findOne({ email, purpose: "reset" } as any).sort({ createdAt: -1 });
-    
+
     if (!record) return sendError(res, status_code.BAD_REQUEST, responseMessage.forgotPassword_otp_invalid);
-    
+
     if (record.expireAt < new Date()) {
       await otpModel.deleteMany({ email, purpose: "reset" } as any);
       return sendError(res, status_code.BAD_REQUEST, responseMessage.forgotPassword_otp_expired);
@@ -283,7 +283,7 @@ export const resetForgotPassword = async (req, res) => {
 export const changePassword = async (req, res) => {
   const { error, value } = authValidation.changePasswordValidation.validate(
     req.body,
-    joiValidationOptions
+    commonValidation.joiValidationOptions
   );
   if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message);
 
@@ -302,7 +302,7 @@ export const changePassword = async (req, res) => {
 
     user.password = bcrypt.hashSync(newPassword, 12);
     await user.save();
-    
+
     return sendSuccess(res, {}, responseMessage.changePassword_success);
   } catch (err) {
     return sendError(res, status_code.INTERNAL_SERVER_ERROR, responseMessage.changePassword_failed, err.message);

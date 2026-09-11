@@ -1,15 +1,14 @@
-import { responseMessage, ROLES, status_code } from "../../common";
 import mongoose from "mongoose";
+import { responseMessage, ROLES, status_code } from "../../common";
 import { userModel, productModel } from "../../database";
-import { joiValidationOptions, productValidation } from "../../validation";
-import { sendSuccess, sendError, resolveUserMedicalStoreId, applyMedicalStoreScope, reqInfo, titleCase } from "../../helper";
-import { getData, getFirstMatch, countData, createData, updateData, findOneAndPopulate,} from "../../helper/database_service";
+import { applyMedicalStoreScope, countData, createData, findOneAndPopulate, getData, getFirstMatch, reqInfo, resolveUserMedicalStoreId, sendError, sendSuccess, titleCase, updateData } from "../../helper";
+import { commonValidation, productValidation } from "../../validation";
 
 // ================= Add New Product =================
 export const add_product = async (req, res) => {
   reqInfo(req)
   try {
-    const { error, value } = productValidation.productDataValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = productValidation.productDataValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     value.name = titleCase(String(value.name || "").trim())
@@ -49,7 +48,7 @@ export const update_product_by_id = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = productValidation.productUpdateDataValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = productValidation.productUpdateDataValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     if (value.name) value.name = titleCase(String(value.name).trim())
@@ -209,7 +208,7 @@ export const toggle_product_active_status = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = productValidation.toggleProductStatusValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = productValidation.toggleProductStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!mongoose.Types.ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("product id"))
 

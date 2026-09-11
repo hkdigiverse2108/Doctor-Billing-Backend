@@ -6,3 +6,4 @@ export * from "./category";
 export * from "./medicalStore";
 export * from "./user";
 export * from "./financial";
+export * from "./patient";

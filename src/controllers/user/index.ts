@@ -2,10 +2,8 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { responseMessage, ROLES, status_code } from "../../common";
 import { userModel } from "../../database";
-import { reqInfo, sendError, sendSuccess } from "../../helper";
-import { joiValidationOptions } from "../../validation";
-import { addUserValidation, userValidaiton, toggleUserStatusValidation } from "../../validation/user";
-import { getData, getFirstMatch, countData, createData, updateData } from "../../helper/database_service";
+import { commonValidation, userValidation } from "../../validation";
+import { countData, createData, getData, getFirstMatch, reqInfo, sendError, sendSuccess, updateData } from "../../helper";
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -13,7 +11,7 @@ const ObjectId = mongoose.Types.ObjectId;
 export const add_user = async (req, res) => {
   reqInfo(req)
   try {
-    const { error, value } = addUserValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = userValidation.addUserValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     const exists = await getFirstMatch(userModel, { email: value.email, isDeleted: false })
@@ -34,7 +32,7 @@ export const update_user_by_id = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = userValidaiton.validate(req.body, joiValidationOptions)
+    const { error, value } = userValidation.userValidaiton.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("user id"))
 
@@ -117,7 +115,7 @@ export const toggle_user_active_status = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = toggleUserStatusValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = userValidation.toggleUserStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("user id"))
 

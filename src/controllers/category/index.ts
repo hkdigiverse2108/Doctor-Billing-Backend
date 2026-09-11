@@ -1,16 +1,15 @@
 import { responseMessage, ROLES, status_code } from "../../common";
 import { userModel, categoryModel } from "../../database";
-import { categoryValidation, joiValidationOptions } from "../../validation";
+import { applyMedicalStoreScope, buildRoleQuery, countData, createData, findOneAndPopulate, getData, getFirstMatch, reqInfo, resolveUserMedicalStoreId, sendError, sendSuccess, titleCase, updateData } from "../../helper";
+import { categoryValidation, commonValidation } from "../../validation";
 import mongoose from "mongoose";
-import { sendSuccess, sendError, buildRoleQuery, resolveUserMedicalStoreId, applyMedicalStoreScope, reqInfo, titleCase } from "../../helper";
-import { getData, getFirstMatch, createData, countData, updateData, findOneAndPopulate } from "../../helper/database_service";
 
 
 // ============== Add Category controller ==========================
 export const add_category = async (req, res) => {
   reqInfo(req)
   try {
-    const { error, value } = categoryValidation.addCategoryValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = categoryValidation.addCategoryValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     let ownerUserId = req.user._id, medicalStoreId: any = req.user?.medicalStoreId
@@ -48,7 +47,7 @@ export const update_category_by_id = async (req, res) => {
   reqInfo(req)
   try {
     const payload = { ...req.body, id: req.params.id || req.body.id }
-    const { error, value } = categoryValidation.updateCategoryValidation.validate(payload, joiValidationOptions)
+    const { error, value } = categoryValidation.updateCategoryValidation.validate(payload, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!mongoose.Types.ObjectId.isValid(value.id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("category id"))
 
@@ -175,7 +174,7 @@ export const toggle_category_active_status = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = categoryValidation.toggleCategoryStatusValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = categoryValidation.toggleCategoryStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!mongoose.Types.ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("category id"))
 

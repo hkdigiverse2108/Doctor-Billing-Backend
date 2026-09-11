@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { responseMessage, status_code } from "../../common";
 import { storeModel } from "../../database";
 import { reqInfo, sendError, sendSuccess } from "../../helper";
-import { joiValidationOptions, medicalStoreValidation } from "../../validation";
+import { commonValidation, medicalStoreValidation } from "../../validation";
 import {getData,getFirstMatch,createData,countData,updateData, } from "../../helper/database_service";
 
 const ObjectId = mongoose.Types.ObjectId;
@@ -30,7 +30,7 @@ const emptySignaturePayload = () => ({ path: "",filename: "", originalName: "",s
 export const add_medical_store = async (req, res) => {
   reqInfo(req)
   try {
-    const { error, value } = medicalStoreValidation.addMedicalStoreValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = medicalStoreValidation.addMedicalStoreValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
 
     const existing = await getFirstMatch(storeModel, { name: { $regex: `^${value.name.trim()}$`, $options: "si" }, sDeleted: false,})
@@ -51,7 +51,7 @@ export const update_medical_store_by_id = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = medicalStoreValidation.medicalStoreUpdateDataValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = medicalStoreValidation.medicalStoreUpdateDataValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("medical store id"))
 
@@ -141,7 +141,7 @@ export const toggle_medical_store_active_status = async (req, res) => {
   reqInfo(req)
   try {
     const { id } = req.params
-    const { error, value } = medicalStoreValidation.toggleMedicalStoreStatusValidation.validate(req.body, joiValidationOptions)
+    const { error, value } = medicalStoreValidation.toggleMedicalStoreStatusValidation.validate(req.body, commonValidation.joiValidationOptions)
     if (error) return sendError(res, status_code.BAD_REQUEST, error.details[0].message)
     if (!ObjectId.isValid(id)) return sendError(res, status_code.BAD_REQUEST, responseMessage.invalidId("medical store id"))
 
